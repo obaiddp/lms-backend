@@ -1,0 +1,16 @@
+[2026-11-11 11:38:58] local.ERROR: The "--compact" option does not exist. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\RuntimeException(code: 0): The \"--compact\" option does not exist. at /home/obaid/lms/cef-lms-backend/vendor/symfony/console/Input/ArgvInput.php:222)
+[stacktrace]
+#0 /home/obaid/lms/cef-lms-backend/vendor/symfony/console/Input/ArgvInput.php(151): Symfony\\Component\\Console\\Input\\ArgvInput->addLongOption()
+#1 /home/obaid/lms/cef-lms-backend/vendor/symfony/console/Input/ArgvInput.php(85): Symfony\\Component\\Console\\Input\\ArgvInput->parseLongOption()
+#2 /home/obaid/lms/cef-lms-backend/vendor/symfony/console/Input/ArgvInput.php(74): Symfony\\Component\\Console\\Input\\ArgvInput->parseToken()
+#3 /home/obaid/lms/cef-lms-backend/vendor/symfony/console/Input/Input.php(56): Symfony\\Component\\Console\\Input\\ArgvInput->parse()
+#4 /home/obaid/lms/cef-lms-backend/vendor/symfony/console/Command/Command.php(285): Symfony\\Component\\Console\\Input\\Input->bind()
+#5 /home/obaid/lms/cef-lms-backend/vendor/laravel/framework/src/Illuminate/Console/Command.php(152): Symfony\\Component\\Console\\Command\\Command->run()
+#6 /home/obaid/lms/cef-lms-backend/vendor/symfony/console/Application.php(1108): Illuminate\\Console\\Command->run()
+#7 /home/obaid/lms/cef-lms-backend/vendor/symfony/console/Application.php(325): Symfony\\Component\\Console\\Application->doRunCommand()
+#8 /home/obaid/lms/cef-lms-backend/vendor/symfony/console/Application.php(176): Symfony\\Component\\Console\\Application->doRun()
+#9 /home/obaid/lms/cef-lms-backend/vendor/laravel/framework/src/Illuminate/Console/Application.php(102): Symfony\\Component\\Console\\Application->run()
+#10 /home/obaid/lms/cef-lms-backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(155): Illuminate\\Console\\Application->run()
+#11 /home/obaid/lms/cef-lms-backend/artisan(35): Illuminate\\Foundation\\Console\\Kernel->handle()
+#12 {main}
+"} 

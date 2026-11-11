@@ -1,0 +1,25 @@
+{
+    "build_version" : "22",
+    "root_path" : "main_file",
+    "code_path" : {
+        "composer.json" : "file",
+        "package.json" : "file",
+        ".env.example" : "file",
+        "database" : "document",
+        "routes" : "document",
+        "resources/css" : "document",
+        "resources/js" : "document",
+        "resources/sass" : "document",
+        "resources/views" : "document",
+        "public/admin" : "document",
+        "public/bulk_upload" : "document",
+        "public/common" : "document",
+        "public/frontend" : "document",
+        "public/frontend-theme-2" : "document",
+        "public/frontend-theme-3" : "document",
+        "public/zaifiles" : "document",
+        "vendor" : "document",
+        "config" : "document",
+        "app" : "document"
+    }
+}

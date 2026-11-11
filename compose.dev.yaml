@@ -1,0 +1,107 @@
+services:
+  cef-nginx:
+    image: nginx:latest
+    volumes:
+      - /home/malaiibaig/projects/lms-backend:/var/www
+      - /home/malaiibaig/projects/lms-backend/docker/development/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    networks:
+      - cef-network
+    depends_on:
+      cef-php-fpm:
+        condition: service_healthy
+    restart: unless-stopped
+
+  cef-php-fpm:
+    build:
+      context: /home/malaiibaig/projects/lms-backend
+      dockerfile: docker/common/php-fpm/Dockerfile
+      target: development
+      args:
+        UID: 1000
+        GID: 1000
+        XDEBUG_ENABLED: true
+        XDEBUG_MODE: develop,coverage,debug,profile
+        XDEBUG_HOST: host.docker.internal
+        XDEBUG_IDE_KEY: DOCKER
+        XDEBUG_LOG: /dev/stdout
+        XDEBUG_LOG_LEVEL: 0
+    environment:
+      - UID=1000
+      - GID=1000
+    volumes:
+      - /home/malaiibaig/projects/lms-backend:/var/www
+      - /home/malaiibaig/projects/lms-backend/docker/development/php-fpm/entrypoint.sh:/entrypoint.sh
+    networks:
+      - cef-network
+    entrypoint: ["sh", "/entrypoint.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9000 && [ -f /var/www/.docker-setup-complete ] || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    restart: unless-stopped
+
+  cef-workspace:
+    build:
+      context: /home/malaiibaig/projects/lms-backend
+      dockerfile: docker/development/workspace/Dockerfile
+      args:
+        UID: 1000
+        GID: 1000
+        XDEBUG_ENABLED: true
+        XDEBUG_MODE: develop,coverage,debug,profile
+        XDEBUG_HOST: host.docker.internal
+        XDEBUG_IDE_KEY: DOCKER
+        XDEBUG_LOG: /dev/stdout
+        XDEBUG_LOG_LEVEL: 0
+    environment:
+      - UID=1000
+      - GID=1000
+    ports:
+      - "5173:5173"
+    tty: true
+    stdin_open: true
+    volumes:
+      - /home/malaiibaig/projects/lms-backend:/var/www
+    networks:
+      - cef-network
+    restart: unless-stopped
+
+  cef-mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=cefdb
+      - MYSQL_USER=cefuser
+      - MYSQL_PASSWORD=cefsecret
+      - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - cef-mysql-data:/var/lib/mysql
+    networks:
+      - cef-network
+    restart: unless-stopped
+
+  cef-phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8080:80"
+    environment:
+      - PMA_HOST=cef-mysql
+      - PMA_USER=root
+      - PMA_PASSWORD=root
+      - UPLOAD_LIMIT=1G
+    networks:
+      - cef-network
+    depends_on:
+      - cef-mysql
+    restart: unless-stopped
+
+networks:
+  cef-network:
+
+volumes:
+  cef-mysql-data:

@@ -1,0 +1,57 @@
+services:
+  cef-nginx:
+    build:
+      context: /home/malaiibaig/projects/lms-backend
+      dockerfile: ./docker/production/nginx/Dockerfile
+    ports:
+      - "80:80"
+    networks:
+      - cef-network
+    depends_on:
+      cef-php-fpm:
+        condition: service_healthy
+    restart: unless-stopped
+
+  cef-php-fpm:
+    build:
+      context: /home/malaiibaig/projects/lms-backend
+      dockerfile: ./docker/common/php-fpm/Dockerfile
+      target: production
+    volumes:
+      - cef-storage:/var/www/storage
+      - cef-bootstrap-cache:/var/www/bootstrap/cache
+    networks:
+      - cef-network
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/php-fpm-healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  cef-mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=cefdb
+      - MYSQL_USER=cefuser
+      - MYSQL_PASSWORD=cefsecret
+      - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - cef-mysql-data:/var/lib/mysql
+    networks:
+      - cef-network
+    restart: unless-stopped
+
+networks:
+  cef-network:
+
+volumes:
+  cef-mysql-data:
+  cef-storage:
+  cef-bootstrap-cache:

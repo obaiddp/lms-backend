@@ -1,0 +1,2 @@
+<input type="submit" class="btn btn-blue" value="<?php echo e(__('Update')); ?>" name="update">
+<?php /**PATH /home/obaid/lms/cef-lms-backend/resources/views/layouts/element/form/update-button.blade.php ENDPATH**/ ?>
