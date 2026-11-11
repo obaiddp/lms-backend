@@ -19,6 +19,17 @@ The runner performs a connectivity check first and exits with a clear startup me
 
 Set the environment values for the four role accounts before running. The collection logs in as admin, organization, instructor, and student, stores their Sanctum tokens, and verifies role claims and cross-role access. It also checks public course discovery, student course access, cart/payment authentication and validation, and token revocation.
 
+For Newman, populate these environment variables with approved test accounts before running:
+
+```text
+admin_email, admin_password
+organization_email, organization_password
+instructor_email, instructor_password
+student_email, student_password
+```
+
+The login endpoint returns `422` when an email or password is blank or invalid. The collection only parses a login response as JSON after a successful `200`, so invalid credentials produce the useful login failure without secondary token/JSON errors.
+
 Course creation in this application is a web/session route rather than a JSON API. To run that request, set `web_session_cookie` and `web_csrf_token` to values obtained from an authenticated organization browser session. Without those values the request is explicitly skipped; no credentials or payment gateway data are committed to the repository.
 
 The payment requests intentionally stop at authentication and input validation. Real gateway calls are not automated so the suite cannot create charges or require provider credentials.
