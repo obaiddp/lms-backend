@@ -8,6 +8,15 @@ BASE_URL=http://localhost ./scripts/run-postman.sh
 
 The script downloads/runs Newman through `npx`, so Newman does not need to be added to the application dependencies.
 
+The backend must already be running. For a local Laravel server:
+
+```bash
+php artisan serve --host=127.0.0.1 --port=8000
+BASE_URL=http://127.0.0.1:8000 ./scripts/run-postman.sh
+```
+
+The runner performs a connectivity check first and exits with a clear startup message instead of producing cascading `undefined` response and JSON errors.
+
 Set the environment values for the four role accounts before running. The collection logs in as admin, organization, instructor, and student, stores their Sanctum tokens, and verifies role claims and cross-role access. It also checks public course discovery, student course access, cart/payment authentication and validation, and token revocation.
 
 Course creation in this application is a web/session route rather than a JSON API. To run that request, set `web_session_cookie` and `web_csrf_token` to values obtained from an authenticated organization browser session. Without those values the request is explicitly skipped; no credentials or payment gateway data are committed to the repository.
