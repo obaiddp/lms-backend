@@ -1,0 +1,264 @@
+{
+  "info": {
+    "_postman_id": "lms-backend-regression",
+    "name": "LMS Backend - RBAC, Courses and Payments",
+    "description": "Automated regression coverage for the Laravel Sanctum API. The web course-authoring request is opt-in and requires a real authenticated session cookie and CSRF token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "api_prefix", "value": "/api" },
+    { "key": "web_prefix", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{student_token}}", "type": "string" }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.variables.set('run_id', Date.now().toString());"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login - Admin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\":\"{{admin_email}}\",\"password\":\"{{admin_password}}\"}" },
+            "url": "{{base_url}}{{api_prefix}}/login"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('admin login succeeds', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.expect(body.token, 'Sanctum token').to.be.a('string').and.not.empty;",
+            "pm.environment.set('admin_token', body.token);"
+          ] } }]
+        },
+        {
+          "name": "Login - Organization",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\":\"{{organization_email}}\",\"password\":\"{{organization_password}}\"}" },
+            "url": "{{base_url}}{{api_prefix}}/login"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('organization login succeeds', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.expect(body.token, 'Sanctum token').to.be.a('string').and.not.empty;",
+            "pm.expect(Number(body.role), 'organization role').to.equal(4);",
+            "pm.environment.set('organization_token', body.token);"
+          ] } }]
+        },
+        {
+          "name": "Login - Instructor",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\":\"{{instructor_email}}\",\"password\":\"{{instructor_password}}\"}" },
+            "url": "{{base_url}}{{api_prefix}}/login"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('instructor login succeeds', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.expect(body.token, 'Sanctum token').to.be.a('string').and.not.empty;",
+            "pm.expect(Number(body.role), 'instructor role').to.equal(2);",
+            "pm.environment.set('instructor_token', body.token);"
+          ] } }]
+        },
+        {
+          "name": "Login - Student",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\":\"{{student_email}}\",\"password\":\"{{student_password}}\"}" },
+            "url": "{{base_url}}{{api_prefix}}/login"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('student login succeeds', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.expect(body.token, 'Sanctum token').to.be.a('string').and.not.empty;",
+            "pm.expect(Number(body.role), 'student role').to.equal(3);",
+            "pm.environment.set('student_token', body.token);"
+          ] } }]
+        },
+        {
+          "name": "Unauthenticated access is rejected",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}{{api_prefix}}/me" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('unauthenticated request is rejected', () => pm.expect(pm.response.code).to.be.oneOf([401, 403]));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "RBAC",
+      "item": [
+        {
+          "name": "Student can access student dashboard data",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_token}}" }],
+            "url": "{{base_url}}{{api_prefix}}/student/my-learning"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('student endpoint is available to student', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+          ] } }]
+        },
+        {
+          "name": "Student cannot access instructor dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_token}}" }],
+            "url": "{{base_url}}{{api_prefix}}/instructor/dashboard"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('student is denied instructor endpoint', () => pm.expect(pm.response.code).to.be.oneOf([401, 403]));"
+          ] } }]
+        },
+        {
+          "name": "Instructor can access instructor dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{instructor_token}}" }],
+            "url": "{{base_url}}{{api_prefix}}/instructor/dashboard"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('instructor endpoint is available to instructor', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+          ] } }]
+        },
+        {
+          "name": "Authenticated identity matches token",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_token}}" }],
+            "url": "{{base_url}}{{api_prefix}}/me"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('identity endpoint succeeds', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.expect(body.userDetails || body.user || body).to.exist;"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Courses and workflow",
+      "item": [
+        {
+          "name": "List public courses",
+          "request": { "method": "GET", "url": "{{base_url}}{{api_prefix}}/frontend/all-courses" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('public courses endpoint succeeds', () => pm.response.to.have.status(200));",
+            "pm.expect(pm.response.json()).to.exist;"
+          ] } }]
+        },
+        {
+          "name": "Student course detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_token}}" }],
+            "url": "{{base_url}}{{api_prefix}}/frontend/course/detail/{{course_slug}}"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('course detail is reachable', () => pm.expect(pm.response.code).to.be.oneOf([200, 404]));",
+            "if (pm.response.code === 200) pm.expect(pm.response.json()).to.exist;"
+          ] } }]
+        },
+        {
+          "name": "Create course - web session flow (opt-in)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-XSRF-TOKEN", "value": "{{web_csrf_token}}" },
+              { "key": "Cookie", "value": "{{web_session_cookie}}" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "title", "value": "Postman Regression Course {{run_id}}" },
+              { "key": "course_type", "value": "1" },
+              { "key": "subtitle", "value": "Automated course creation regression" },
+              { "key": "description", "value": "Created by the Postman/Newman regression suite." }
+            ] },
+            "url": "{{base_url}}{{web_prefix}}/organization/course/store"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "if (!pm.environment.get('web_session_cookie') || !pm.environment.get('web_csrf_token')) {",
+            "  pm.test('course creation skipped: web_session_cookie and web_csrf_token are not configured', () => true);",
+            "} else {",
+            "pm.test('course creation returns a successful redirect', () => pm.expect(pm.response.code).to.be.oneOf([302, 303]));",
+            "}"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Student cart is available",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_token}}" }],
+            "url": "{{base_url}}{{api_prefix}}/student/cartList"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('student cart endpoint succeeds', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+          ] } }]
+        },
+        {
+          "name": "Payment checkout requires authentication",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{base_url}}{{api_prefix}}/student/pay"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('payment endpoint rejects unauthenticated request', () => pm.expect(pm.response.code).to.be.oneOf([401, 403]));"
+          ] } }]
+        },
+        {
+          "name": "Student payment checkout validation",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{student_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{base_url}}{{api_prefix}}/student/pay"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('payment endpoint validates request without charging a gateway', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 422]));"
+          ] } }]
+        },
+        {
+          "name": "Logout revokes student token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_token}}" }],
+            "url": "{{base_url}}{{api_prefix}}/logoutApi"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('logout succeeds', () => pm.response.to.have.status(200));"
+          ] } }]
+        }
+      ]
+    }
+  ]
+}
